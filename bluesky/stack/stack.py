@@ -332,32 +332,32 @@ class Commandstack:
             "DATALOG": [
                 "DATALOG ON/OFF",
                 "txt",
-                lambda setting: traf.log.setLogger(0,setting)
+                lambda setting: traf.log.setLogger(0,self.scenfile,setting)
             ],
             "CFLLOG": [
                 "CFLLOG ON/OFF",
                 "txt",
-                lambda setting: traf.log.setLogger(1,setting)
+                lambda setting: traf.log.setLogger(1,self.scenfile,setting)
             ],
             "INTLOG": [
                 "INTLOG ON/OFF",
                 "txt",
-                lambda setting: traf.log.setLogger(2,setting)
+                lambda setting: traf.log.setLogger(2,self.scenfile,setting)
             ],
             "SNAPLOG": [
                 "SNAPLOG ON/OFF",
                 "txt",
-                lambda setting: traf.log.setLogger(3,setting)
+                lambda setting: traf.log.setLogger(3,self.scenfile,setting)
             ],
             "FLSTLOG": [
                 "FLSTLOG ON/OFF",
                 "txt",
-                lambda setting: traf.log.setLogger(4,setting)
+                lambda setting: traf.log.setLogger(4,self.scenfile,setting)
             ],
             "INSTLOG": [
                 "INSTLOG ON/OFF",
                 "txt",
-                lambda setting: traf.log.setLogger(5,setting)
+                lambda setting: traf.log.setLogger(5,self.scenfile,setting)
             ],
             "ZOOM": [
                 "ZOOM IN/OUT or factor",

@@ -280,8 +280,10 @@ class Datalog():
                 self.save(6)
         return
 
-    def setLogger(self,type, arg=None):
+    def setLogger(self,type, name, arg=None):
         """Command Stack for the logger """
+        if arg == 'ON':
+            self.scenfile = name
         if type == 0:
             if arg == 'ON':
                 self.swsky = True
