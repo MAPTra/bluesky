@@ -283,12 +283,57 @@ class Datalog():
     def setLogger(self,type, arg=None):
         """Command Stack for the logger """
         if type == 0:
-            self.swsky = True
-            self.writesettings(self.scenfile,0)
-            return True
+            if arg == 'ON':
+                self.swsky = True
+                self.writesettings(self.scenfile,0)
+                return True
+            elif arg == 'OFF':
+                self.swsky = False
+                self.save(0)
+                return True
+        if type == 1:
+            if arg == 'ON':
+                self.swcfl = True
+                self.writesettings(self.scenfile,1)
+                return True
+            elif arg == 'OFF':
+                self.swcfl = False
+                self.save(1)
+                return True
+        if type == 2:
+            if arg == 'ON':
+                self.swint = True
+                self.writesettings(self.scenfile,2)
+                return True
+            elif arg == 'OFF':
+                self.swint = False
+                self.save(2)
+                return True
+        if type == 3:
+            if arg == 'ON':
+                self.swsnap = True
+                self.writesettings(self.scenfile,3)
+                return True
+            elif arg == 'OFF':
+                self.swsnap = False
+                self.save(3)
+                return True
         if type == 4:
-            self.swflst = True
-            self.writesettings(self.scenfile,0)
-            return True
-        
+            if arg == 'ON':
+                self.swflst = True
+                self.writesettings(self.scenfile,4)
+                return True
+            elif arg == 'OFF':
+                self.swflst = False
+                self.save(4)
+                return True
+        if type == 5:
+            if arg == 'ON':
+                self.swinst = True
+                self.writesettings(self.scenfile,5)
+                return True
+            elif arg == 'OFF':
+                self.swinst = False
+                self.save(5)
+                return True
         return False

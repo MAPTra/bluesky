@@ -609,7 +609,6 @@ class Traffic:
         # Scheduling: when dt has passed or restart:
         if self.t0asas + self.dtasas < simt or simt < self.t0asas \
             and self.dbconf.swasas:
-            self.t0asas = simt
 
             # Save old result
             iconf0 = np.array(self.iconf)

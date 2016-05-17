@@ -12,6 +12,7 @@ except ImportError:
 from ..tools.misc import txt2alt, cmdsplit, txt2lat, txt2lon
 from .. import settings
 
+
 class Commandstack:
     """
     Commandstack class definition : command stack & processing class
@@ -327,7 +328,36 @@ class Commandstack:
                 "LAYER ON/OFF/360/180/90/45",
                 "txt",
                 traf.setLayer
-                      
+            ],
+            "DATALOG": [
+                "DATALOG ON/OFF",
+                "txt",
+                lambda setting: traf.log.setLogger(0,setting)
+            ],
+            "CFLLOG": [
+                "CFLLOG ON/OFF",
+                "txt",
+                lambda setting: traf.log.setLogger(1,setting)
+            ],
+            "INTLOG": [
+                "INTLOG ON/OFF",
+                "txt",
+                lambda setting: traf.log.setLogger(2,setting)
+            ],
+            "SNAPLOG": [
+                "SNAPLOG ON/OFF",
+                "txt",
+                lambda setting: traf.log.setLogger(3,setting)
+            ],
+            "FLSTLOG": [
+                "FLSTLOG ON/OFF",
+                "txt",
+                lambda setting: traf.log.setLogger(4,setting)
+            ],
+            "INSTLOG": [
+                "INSTLOG ON/OFF",
+                "txt",
+                lambda setting: traf.log.setLogger(5,setting)
             ],
             "ZOOM": [
                 "ZOOM IN/OUT or factor",
