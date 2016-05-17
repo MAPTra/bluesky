@@ -2,10 +2,10 @@ import os
 import numpy as np
 from xml.etree import ElementTree
 from math import *
-from ..tools.aero import ft, g0, a0, T0, rho0, gamma1, gamma2,  beta, R, \
-    kts, lbs, inch, sqft, fpm, vtas2cas
+from ..tools.aero import ft, g0, a0, T0, rho0, gamma1, gamma2,  beta, R, kts, lbs, inch, sqft, fpm
+from ..tools.aero_np import vtas2cas
 
-from performance import esf, phases, limits
+from ..tools.performance import esf, phases, limits
 
 
 class CoeffBS:
@@ -482,7 +482,7 @@ class Perf():
                 if not self.warned2:
                     print " jet aircraft is using standard engine. Please check valid engine types per aircraft type"
                     self.warned2 = True
-
+        
             self.rThr   = np.append(self.rThr, coeffBS.rThr[self.jetengidx]*coeffBS.n_eng[self.coeffidx])  # rated thrust (all engines)
             self.Thr    = np.append(self.Thr, coeffBS.rThr[self.jetengidx]*coeffBS.n_eng[self.coeffidx])  # initialize thrust with rated thrust       
             self.maxthr = np.append (self.maxthr, coeffBS.rThr[self.jetengidx]*coeffBS.n_eng[self.coeffidx]*1.2)  # maximum thrust - initialize with 1.2*rThr
@@ -700,6 +700,8 @@ class Perf():
 
         return
 
+
+
     def limits(self):
         """Flight envelope"""
 
@@ -724,15 +726,12 @@ class Perf():
 
         return
 
-    def engchange(self, idx, engid=None):
+    def engchange(self, acid, engid):
         """change of engines - for jet aircraft only!"""
-        if not engid:
-            disptxt = "available engine types:\n" + '\n'.join(self.traf.engines[idx]) + \
-                      "\nChange engine with ENG acid engine_id"
-            return False, disptxt
-        engidx = self.traf.engines[idx].index(engid)
-        self.jetengidx = coeffBS.jetenlist.index(coeffBS.engines[idx][engidx])
+        idx = self.traf.id.index(acid)
 
+        self.jetengidx = coeffBS.jetenlist.index(coeffBS.engines[idx][engid])
+  
         # exchange engine parameters
 
         self.rThr[idx]   = coeffBS.rThr[self.jetengidx]*coeffBS.n_eng[idx] # rated thrust (all engines)

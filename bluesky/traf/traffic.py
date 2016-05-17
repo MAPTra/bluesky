@@ -536,7 +536,10 @@ class Traffic:
         # Update only necessary if there is traffic
         if self.ntraf == 0:
             return
-
+        import pdb
+        print self.perf.Thr
+        if self.perf.Thr < 0.:
+            pdb.set_trace()
         self.dts.append(simdt)
 
         #---------------- Atmosphere ----------------
