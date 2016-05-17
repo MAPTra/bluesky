@@ -9,8 +9,10 @@ try:
 except ImportError:
     from ..tools import geo
 from ..tools.misc import degto180
+from ..tools.datalog import Datalog
 
 from route import Route
+from flst import FLST
 from params import Trails
 from adsbmodel import ADSBModel
 from asas import Dbconf
@@ -75,6 +77,12 @@ class Traffic:
         self.dts = []
 
         self.ntraf = 0
+
+        # Create datalog instance
+        self.log = Datalog(self)
+
+        # Create flight statistics instance
+        self.flst = FLST(self)
 
         # Traffic list & arrays definition
 
@@ -404,6 +412,12 @@ class Traffic:
 
         self.eps = np.append(self.eps, 0.01)
 
+        # Flight Statistics data
+        self.flst.distance_2D    = np.append(self.flst.distance_2D,0.)
+        self.flst.distance_3D    = np.append(self.flst.distance_3D,0.)
+        self.flst.flightime      = np.append(self.flst.flightime,0.)
+        self.flst.work           = np.append(self.flst.work,0.)
+
         return True
 
     def delete(self, acid):
@@ -530,16 +544,20 @@ class Traffic:
         self.ntraf = self.ntraf - 1
 
         self.eps = np.delete(self.eps, idx)
+
+        # Flight Statistics data
+        self.flst.distance_2D    = np.delete(self.flst.distance_2D,idx)
+        self.flst.distance_3D    = np.delete(self.flst.distance_3D,idx)
+        self.flst.flightime      = np.delete(self.flst.flightime,idx)
+        self.flst.work           = np.delete(self.flst.work,idx)
+        
         return True
 
     def update(self, simt, simdt):
         # Update only necessary if there is traffic
         if self.ntraf == 0:
             return
-        import pdb
-        print self.perf.Thr
-        if self.perf.Thr < 0.:
-            pdb.set_trace()
+
         self.dts.append(simdt)
 
         #---------------- Atmosphere ----------------
@@ -893,6 +911,23 @@ class Traffic:
             self.lastlon = self.lon
             self.lasttim[:] = simt
 
+        # Update Flight Statistics
+        self.flst.update(simdt)
+        
+        # ------------- DATALOG -------------
+        if self.t0asas+self.dtasas<simt or simt<self.t0asas:
+            self.t0asas = simt
+
+            # Logging: SKY data of all aircraft, every dtsky seconds
+            self.log.skysave(self,simt)
+
+            # Logging: SNAP data of all aircraft, every dtsnap seconds
+            self.log.snapsave(self,simt)
+
+        # Write the logged data to the files and clear the buffer, every dtwritelog seconds
+        # -> Used to avoid any memory problems due to an overload of logging data
+        self.log.clearbuffer(simt)
+
         # ----------------AREA check----------------
         # Update area once per areadt seconds:
         if self.swarea and abs(simt - self.areat0) > self.areadt:
@@ -916,6 +951,14 @@ class Traffic:
 
                 # Compare with previous: when leaving area: delete command
                 if self.inside[i] and not inside:
+                    # If FLST logging is ON, log the flight statistics data of the aircraft before deleting it
+                    if self.log.swflst:
+                        self.log.write(4,simt,'%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % \
+                                       (self.id[i],self.orig[i],self.dest[i],self.type[i], \
+                                        self.flst.distance_2D[i],self.flst.distance_3D[i], \
+                                        self.flst.flightime[i],self.flst.work[i], \
+                                        self.lat[i],self.lon[i],self.alt[i]))
+
                     self.delete(self.id[i])
 
                 else:

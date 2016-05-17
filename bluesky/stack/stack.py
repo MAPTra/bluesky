@@ -196,11 +196,11 @@ class Commandstack:
                 "acid,[onoff]",
                 traf.setLNAV
             ],
-            "LOG": [
-                "LOG acid/area/*,dt",
-                "txt,float",
-                sim.datalog.start
-            ],
+#            "LOG": [
+#                "LOG acid/area/*,dt",
+#                "txt,float",
+#                sim.datalog.start
+#            ],
             "MCRE": [
                 "MCRE n, [type/*, alt/*, spd/*, dest/*]",
                 "int,[txt,alt,spd,txt]",
@@ -327,6 +327,7 @@ class Commandstack:
                 "LAYER ON/OFF/360/180/90/45",
                 "txt",
                 traf.setLayer
+                      
             ],
             "ZOOM": [
                 "ZOOM IN/OUT or factor",

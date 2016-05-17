@@ -101,7 +101,7 @@ class Dbconf():
         self.conflist_all = []  # List of all Conflicts
         self.LOSlist_all  = []  # List of all Losses Of Separation
         self.conflist_exp = []  # List of all Conflicts in experiment time
-        self.LOSlist_logged  = []  # List of all Losses Of Separation in experiment time
+        self.LOSlist_logged  = []  # Create a list of all Losses Of Separation that are logged
         self.conflist_now = []  # List of current Conflicts
         self.LOSlist_now  = []  # List of current Losses Of Separation
 
@@ -238,6 +238,12 @@ class Dbconf():
         if len(self.swconfl) == 0:
             return
         
+        # INST LOGGING REQUIRED?
+        inst_logging = False
+        if self.traf.log.swinst:
+            if self.traf.log.t0inst+self.traf.log.dtinst<simt or simt<self.traf.log.t0inst:
+                inst_logging = True
+                self.traf.log.t0inst = simt
         # Calculate CPA positions of traffic in lat/lon?
 
         # Select conflicting pairs: each a/c gets their own record
@@ -309,9 +315,32 @@ class Dbconf():
             if combi not in self.conflist_all and combi2 not in self.conflist_all:
                 self.conflist_all.append(combi)
                 self.conflist_exp.append(combi)
+                # If the conflict is added to conflist_all and the logging switch is on, write conflict to buffer
+                if self.traf.log.swcfl:
+                    self.traf.log.write(1,simt,'%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+                                        % (self.traf.id[i],self.traf.id[j],self.tcpa[i][j],self.tinconf[i][j],self.toutconf[i][j], \
+                                           self.latowncpa[idx],self.lonowncpa[idx],self.altowncpa[idx],self.traf.inconflict[i],\
+                                           self.latintcpa[idx],self.lonintcpa[idx],self.altintcpa[idx],self.traf.inconflict[j],\
+                                           self.traf.lat[i],self.traf.lon[i],self.traf.trk[i],self.traf.alt[i], \
+                                           self.traf.tas[i],self.traf.gs[i],self.traf.vs[i],self.traf.type[i], \
+                                           self.traf.lat[j],self.traf.lon[j],self.traf.trk[j],self.traf.alt[j], \
+                                           self.traf.tas[j],self.traf.gs[j],self.traf.vs[j],self.traf.type[j]))
         
             if combi not in self.conflist_now and combi2 not in self.conflist_now:
                 self.conflist_now.append(combi)
+                if inst_logging:
+                    ntot = len(self.traf.vs)
+                    ncr = np.sum(abs(self.traf.vs) < 0.1)
+                    ncd = np.sum(abs(self.traf.vs) >= 0.1)
+                    self.traf.log.write(5,simt,'%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+                                        % ( ntot, ncr, ncd, \
+                                           self.traf.id[i],self.traf.id[j],self.tcpa[i][j],self.tinconf[i][j],self.toutconf[i][j], \
+                                           self.latowncpa[idx],self.lonowncpa[idx],self.altowncpa[idx],self.traf.inconflict[i],\
+                                           self.latintcpa[idx],self.lonintcpa[idx],self.altintcpa[idx],self.traf.inconflict[j],\
+                                           self.traf.lat[i],self.traf.lon[i],self.traf.trk[i],self.traf.alt[i], \
+                                           self.traf.tas[i],self.traf.gs[i],self.traf.vs[i],self.traf.type[i], \
+                                           self.traf.lat[j],self.traf.lon[j],self.traf.trk[j],self.traf.alt[j], \
+                                           self.traf.tas[j],self.traf.gs[j],self.traf.vs[j],self.traf.type[j]))
 
             if LOS:
                 if combi not in self.LOSlist_all and combi2 not in self.LOSlist_all:
@@ -338,6 +367,57 @@ class Dbconf():
                         self.LOSmaxsev[idx]  = severity
                         self.LOShmaxsev[idx] = Ih
                         self.LOSvmaxsev[idx] = Iv
+                    else:
+                        if combi not in self.LOSlist_logged and self.traf.log.swint:
+                            self.traf.log.write(2,simt,'%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+                                                    % (self.traf.id[i],self.traf.id[j], \
+                                                       self.LOShmaxsev[idx], self.LOSvmaxsev[idx], self.tinconf[i][j],self.toutconf[i][j], \
+                                                       self.traf.lat[i],self.traf.lon[i],self.traf.trk[i],self.traf.alt[i], \
+                                                       self.traf.tas[i],self.traf.gs[i],self.traf.vs[i],self.traf.type[i], \
+                                                       self.traf.lat[j],self.traf.lon[j],self.traf.trk[j],self.traf.alt[j], \
+                                                       self.traf.tas[j],self.traf.gs[j],self.traf.vs[j],self.traf.type[j]))
+                            self.LOSlist_logged.append(combi)
+        
+        # If an LOS did never decrease in severity (for example, it only occured 1 simdt),
+        # it is logged when it is in LOSlist_all and not in the LOSlist_now and LOSlist_logged
+        for idx in range(len(self.LOSlist_all)):
+            if self.LOSlist_all[idx] not in self.LOSlist_logged:
+                if self.LOSlist_all[idx] not in self.LOSlist_now:
+                    ac1,ac2 = self.LOSlist_all[idx].split(" ")
+                    i,j = self.ConflictToIndices(self.LOSlist_all[idx])
+                    if i != "Fail" and j != "Fail":
+                        self.traf.log.write(2,simt,'%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+                                        % (self.traf.id[i],self.traf.id[j], \
+                                           self.LOShmaxsev[idx], self.LOSvmaxsev[idx], self.tinconf[i][j],self.toutconf[i][j], \
+                                           self.traf.lat[i],self.traf.lon[i],self.traf.trk[i],self.traf.alt[i], \
+                                           self.traf.tas[i],self.traf.gs[i],self.traf.vs[i],self.traf.type[i], \
+                                           self.traf.lat[j],self.traf.lon[j],self.traf.trk[j],self.traf.alt[j], \
+                                           self.traf.tas[j],self.traf.gs[j],self.traf.vs[j],self.traf.type[j]))
+                    elif i != "Fail" and j == "Fail":
+                        self.traf.log.write(2,simt,'%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+                                            % (self.traf.id[i],ac2, \
+                                               self.LOShmaxsev[idx], self.LOSvmaxsev[idx], "Fail","Fail", \
+                                               self.traf.lat[i],self.traf.lon[i],self.traf.trk[i],self.traf.alt[i], \
+                                               self.traf.tas[i],self.traf.gs[i],self.traf.vs[i],self.traf.type[i], \
+                                               "Fail","Fail","Fail","Fail", \
+                                               "Fail","Fail","Fail","Fail"))
+                    elif i == "Fail" and j != "Fail":
+                        self.traf.log.write(2,simt,'%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+                                            % (ac1,self.traf.id[j], \
+                                               self.LOShmaxsev[idx], self.LOSvmaxsev[idx],"Fail","Fail", \
+                                               "Fail","Fail","Fail","Fail", \
+                                               "Fail","Fail","Fail","Fail", \
+                                               self.traf.lat[j],self.traf.lon[j],self.traf.trk[j],self.traf.alt[j], \
+                                               self.traf.tas[j],self.traf.gs[j],self.traf.vs[j],self.traf.type[j]))
+                    else:
+                        self.traf.log.write(2,simt,'%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+                                            % (ac1,ac2, \
+                                               self.LOShmaxsev[idx], self.LOSvmaxsev[idx],"Fail","Fail", \
+                                               "Fail","Fail","Fail","Fail", \
+                                               "Fail","Fail","Fail","Fail", \
+                                               "Fail","Fail","Fail","Fail", \
+                                               "Fail","Fail","Fail","Fail"))
+                    self.LOSlist_logged.append(self.LOSlist_all[idx])
 
         # Define the total number of active conflicts
         self.nconf = len(self.idown)

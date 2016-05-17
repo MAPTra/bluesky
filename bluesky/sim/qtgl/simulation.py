@@ -102,8 +102,8 @@ class Simulation(QObject):
                 # Update metrics
                 self.metric.update(self)
 
-                # Update log
-                self.datalog.update(self)
+#                # Update log
+#                self.datalog.update(self)
 
                 # Update time for the next timestep
                 self.simt += self.simdt
@@ -133,7 +133,7 @@ class Simulation(QObject):
 
     def stop(self):
         self.state   = Simulation.end
-        self.datalog.save()
+#        self.datalog.save()
 
     def start(self):
         if self.ffmode:
